@@ -1,35 +1,22 @@
-import sys
-import os
-
-# 🔥 Add parent directory to path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
-sys.path.append(parent_dir)
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
 import datetime
 
-# ✅ Import from parent folder
-from backend.recommender import recommend_career, recommend_courses, skill_gap
+# ✅ Correct import
+from recommender import recommend_career, recommend_courses, skill_gap
 
 st.set_page_config(page_title="Career AI", layout="wide")
+
 # ---------------- UI STYLE ----------------
 st.markdown("""
 <style>
-.stApp {
-    background-color: #f5f7fa;
-}
-h1, h2, h3 {
-    color: #1f2937;
-}
+.stApp { background-color: #f5f7fa; }
 .card {
     background: white;
     padding: 16px;
     border-radius: 12px;
-    box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
     margin-bottom: 10px;
 }
 .metric {
@@ -37,12 +24,11 @@ h1, h2, h3 {
     padding: 20px;
     border-radius: 12px;
     text-align: center;
-    box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- SESSION STATE ----------------
+# ---------------- SESSION ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -76,15 +62,12 @@ if not st.session_state.logged_in:
     if st.button("Login"):
         if role == "Guest":
             st.session_state.logged_in = True
-            st.session_state.role = role
 
         elif role == "Student" and roll.isdigit() and len(roll) == 6:
             st.session_state.logged_in = True
-            st.session_state.role = role
 
         elif role == "Parent" and aadhar.isdigit() and len(aadhar) == 12:
             st.session_state.logged_in = True
-            st.session_state.role = role
 
         else:
             st.error("Invalid details")
@@ -110,11 +93,9 @@ with tab1:
 
     col1, col2, col3 = st.columns(3)
 
-    col1.markdown(f"<div class='metric'><h4>Skills</h4><h2>{len(skills.split(',')) if skills else 0}</h2></div>", unsafe_allow_html=True)
-    col2.markdown(f"<div class='metric'><h4>Careers</h4><h2>{len(careers)}</h2></div>", unsafe_allow_html=True)
-    col3.markdown(f"<div class='metric'><h4>Courses</h4><h2>{len(courses)}</h2></div>", unsafe_allow_html=True)
-
-    st.write("")
+    col1.metric("Skills", len(skills.split(',')) if skills else 0)
+    col2.metric("Careers", len(careers))
+    col3.metric("Courses", len(courses))
 
     if skills:
         skill_list = [s.strip().lower() for s in skills.split(",")]
@@ -125,18 +106,9 @@ with tab1:
             "Count": list(counts.values())
         })
 
-        colA, colB = st.columns(2)
+        st.bar_chart(df.set_index("Skills"))
 
-        with colA:
-            st.subheader("Skill Distribution")
-            st.bar_chart(df.set_index("Skills"))
-
-        with colB:
-            fig, ax = plt.subplots()
-            ax.pie(df["Count"], labels=df["Skills"], autopct='%1.1f%%')
-            st.pyplot(fig)
-
-# ---------------- RECOMMENDATION ----------------
+# ---------------- RECOMMEND ----------------
 with tab2:
     st.subheader("🤖 AI Recommendation")
 
@@ -144,11 +116,9 @@ with tab2:
 
     if st.button("🚀 Recommend"):
         if skills_input:
-            with st.spinner("Analyzing your profile..."):
-                results, scores = recommend_career(skills_input)
-                courses = recommend_courses(skills_input)
+            results, scores = recommend_career(skills_input)
+            courses = recommend_courses(skills_input)
 
-            # SAVE DATA
             st.session_state.skills = skills_input
             st.session_state.careers = [r[0] for r in results]
             st.session_state.courses = courses
@@ -159,29 +129,22 @@ with tab2:
                 "time": str(datetime.datetime.now())
             })
 
-            # 🔥 FIX: force refresh
             st.rerun()
 
-    # SHOW RESULTS
     if st.session_state.careers:
-
-        st.subheader("⭐ Best Career Match")
         st.success(st.session_state.careers[0])
 
-        st.subheader("💼 Career Recommendations")
         for c in st.session_state.careers:
-            st.markdown(f"<div class='card'>💼 {c}</div>", unsafe_allow_html=True)
+            st.write("💼", c)
 
-        st.subheader("📚 Recommended Courses")
         for c in st.session_state.courses:
-            st.markdown(f"<div class='card'>📘 {c}</div>", unsafe_allow_html=True)
+            st.write("📘", c)
 
-        st.subheader("📉 Skill Gap")
         results, scores = recommend_career(st.session_state.skills)
         if scores:
             missing = skill_gap(st.session_state.skills, scores[0][0])
             for m in missing:
-                st.markdown(f"<div class='card'>❌ {m}</div>", unsafe_allow_html=True)
+                st.write("❌", m)
 
 # ---------------- HISTORY ----------------
 with tab3:
