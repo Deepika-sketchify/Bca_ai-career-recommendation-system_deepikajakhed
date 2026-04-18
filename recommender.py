@@ -8,6 +8,7 @@ base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 jobs = pd.read_csv(os.path.join(base_dir, "data", "jobs.csv"))
 courses = pd.read_csv(os.path.join(base_dir, "data", "courses.csv"))
 
+
 jobs.dropna(inplace=True)
 
 # Improve matching using weighted keywords
