@@ -1,30 +1,27 @@
 import pandas as pd
-import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-jobs = pd.read_csv(os.path.join(base_dir, "data", "jobs.csv"))
-courses = pd.read_csv(os.path.join(base_dir, "data", "courses.csv"))
-
+# ✅ Load data directly (no data/ folder)
+jobs = pd.read_csv("jobs.csv")
+courses = pd.read_csv("courses.csv")
 
 jobs.dropna(inplace=True)
 
-# Improve matching using weighted keywords
+# Combine text for better matching
 jobs['combined'] = jobs['Job_Title'] + " " + jobs['Skills']
 
 vectorizer = TfidfVectorizer()
 matrix = vectorizer.fit_transform(jobs['combined'])
 
+
 def recommend_career(user_skills):
     user_skills = user_skills.lower()
 
-    # Strong filtering: only consider jobs that share at least 1 skill
     filtered_jobs = jobs[jobs['Skills'].str.contains('|'.join(user_skills.split(',')), case=False)]
 
     if filtered_jobs.empty:
-        filtered_jobs = jobs  # fallback
+        filtered_jobs = jobs
 
     filtered_matrix = vectorizer.transform(filtered_jobs['combined'])
 
@@ -38,7 +35,7 @@ def recommend_career(user_skills):
     for i in scores[:5]:
         job = filtered_jobs.iloc[i[0]]['Job_Title']
         score = round(i[1] * 100, 2)
-        if score > 5:  # ignore weak matches
+        if score > 5:
             results.append((job, score))
 
     return results, scores
