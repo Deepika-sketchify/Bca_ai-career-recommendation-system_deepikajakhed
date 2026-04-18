@@ -1,6 +1,10 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# 🔥 Add parent directory to path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
+sys.path.append(parent_dir)
 
 import streamlit as st
 import pandas as pd
@@ -8,10 +12,10 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import datetime
 
+# ✅ Import from parent folder
 from backend.recommender import recommend_career, recommend_courses, skill_gap
 
 st.set_page_config(page_title="Career AI", layout="wide")
-
 # ---------------- UI STYLE ----------------
 st.markdown("""
 <style>
